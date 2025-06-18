@@ -73,12 +73,9 @@ export const createQuestionSet = async (req, res) => {
       ? `/uploads/question_set/${req.file.filename}`
       : null;
 
-    const [result] = await pool.query(
-      "INSERT INTO question_sets (title, description, image_url, created_by) VALUES (?, ?, ?, ?)",
-      [title, description, image_url, req.user.id]
-    );
-
-    res.status(201).json({ success: true, question_set_id: result.insertId });
+    const id = await QuestionSet.create({ title, description, image_url, created_by: req.user.id });
+    if (!id) return res.status(400).json({ success: false, message: "Thêm bộ câu hỏi thất bại" });
+    res.status(201).json({ success: true, question_set_id: id });
   } catch (err) {
     res
       .status(500)
@@ -145,11 +142,24 @@ export const deleteQuestionSet = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Bạn cần đăng nhập!" });
 
+    let oldImageUrl = null;
+    if (req.file) {
+      const [oldQuestionSet] = await pool.query("SELECT image_url FROM question_sets WHERE id = ?", [id]);
+      if (oldQuestionSet.length > 0) {
+        oldImageUrl = oldQuestionSet[0].image_url;
+      }
+    }
+
     // Xóa bộ câu hỏi chỉ khi user là người tạo
-    await pool.query("DELETE FROM question_sets WHERE id=? AND created_by=?", [
-      id,
-      req.user.id,
-    ]);
+    await QuestionSet.delete(id, req.user.id);
+
+    // Xóa ảnh cũ nếu có
+    if (oldImageUrl) {
+      const oldImagePath = path.join(process.cwd(), oldImageUrl);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
     res.json({ success: true, message: "Xóa thành công" });
   } catch (err) {
     res

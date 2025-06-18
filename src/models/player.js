@@ -11,11 +11,16 @@ const Player = {
     const [rows] = await pool.query('SELECT * FROM players WHERE id = ?', [id]);
     return rows[0] || null;
   },
+  // Kiểm tra username đã tồn tại trong room chưa
+  async checkNickname(room_id, nickname) {
+    const [rows] = await pool.query('SELECT COUNT(*) as count FROM players WHERE room_id = ? AND nickname = ?', [room_id, nickname]);
+    return rows[0]?.count > 0;
+  },
   // Thêm player mới vào room
   async create(data) {
     const [result] = await pool.query(
-      'INSERT INTO players (room_id, nickname, avatar_url, score) VALUES (?, ?, ?, ?)',
-      [data.room_id, data.nickname, data.avatar_url, data.score || 0]
+      'INSERT INTO players (room_id, nickname, score) VALUES (?, ?, ?)',
+      [data.room_id, data.nickname, data.score || 0]
     );
     return result.insertId;
   },

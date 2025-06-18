@@ -7,9 +7,7 @@ export const getAnswers = async (req, res) => {
     if (!question_id) return res.status(400).json({ success: false, message: 'Thiếu question_id' });
     
     const answers = await Answer.getByQuestionId(question_id);
-    if (!answers || answers.length === 0) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đáp án' });
-    }
+    if (answers.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy đáp án' });
     res.json({ success: true, answers });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
@@ -23,9 +21,7 @@ export const getAnswer = async (req, res) => {
     if (!id) return res.status(400).json({ success: false, message: 'Thiếu id' });
     
     const answer = await Answer.getById(id);
-    if (!answers || answers.length === 0) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy đáp án' });
-    }
+    if (!answer) return res.status(404).json({ success: false, message: 'Không tìm thấy đáp án' });
     res.json({ success: true, answer });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
@@ -41,6 +37,7 @@ export const createAnswer = async (req, res) => {
     }
 
     const id = await Answer.create({ question_id, content, is_correct: !!is_correct });
+    if (!id) return res.status(400).json({ success: false, message: 'Thêm đáp án thất bại' });
     res.status(201).json({ success: true, answer_id: id });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });

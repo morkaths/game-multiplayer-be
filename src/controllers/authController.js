@@ -58,9 +58,8 @@ const AuthController = {
       }
       
       // Kiểm tra username đã tồn tại chưa
-      const existingUser = await User.findByUsername(username);
-      
-      if (existingUser) {
+      const isUsernameExists = await User.checkUsername(username);
+      if (isUsernameExists) {
         return res.status(400).json({ 
           success: false, 
           message: 'Tên đăng nhập đã được sử dụng'
@@ -68,9 +67,8 @@ const AuthController = {
       }
       
       // Kiểm tra email đã tồn tại chưa
-      const existingEmail = await User.findByEmail(email);
-      
-      if (existingEmail) {
+      const isEmailExists = await User.checkEmail(email);
+      if (isEmailExists) {
         return res.status(400).json({ 
           success: false, 
           message: 'Email đã được sử dụng'
@@ -124,7 +122,7 @@ const AuthController = {
       }
 
       // Tìm user theo email
-      const user = await User.findByEmail(email);
+      const user = await User.getByEmail(email);
 
       // Kiểm tra nếu user không tồn tại
       if (!user) {

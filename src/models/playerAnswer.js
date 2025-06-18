@@ -31,10 +31,23 @@ const PlayerAnswer = {
     );
     return rows;
   },
-  // Lấy tất cả câu trả lời cho 1 câu hỏi
-  async getByQuestionId(question_id) {
-    const [rows] = await pool.query('SELECT * FROM player_answers WHERE question_id = ?', [question_id]);
+  // Lấy tất cả câu trả lời cho 1 câu hỏi trong phòng
+  async getByQuestionId(room_id, question_id) {
+    const [rows] = await pool.query(
+      `SELECT pa.* FROM player_answers pa
+       JOIN players p ON pa.player_id = p.id
+       WHERE p.room_id = ? AND pa.question_id = ?`,
+      [room_id, question_id]
+    );
     return rows;
+  },
+  // Hàm tiện ích tính điểm
+  calculatePoints(basePoints, responseTime, isCorrect) {
+    if (!isCorrect) return 0;
+    
+    // Điểm = Điểm cơ bản - (Thời gian trả lời × 10) || 30% điểm cơ bản
+    const timePenalty = responseTime * 10;
+    return Math.max(basePoints - timePenalty, basePoints * 0.3);
   }
 };
 

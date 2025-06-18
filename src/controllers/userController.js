@@ -1,22 +1,65 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/user.js';
 
-export const getAllUsers = async (req, res) => {
+// Lấy tất cả user
+export const getUsers = async (req, res) => {
   try {
-    const users = await User.findAll();
-    res.json(users);
+    const users = await User.getAll();
+    res.json({ success: true, users: users });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
   }
 };
 
+// Lấy user theo id
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, message: 'Thiếu id' });
+
+    const user = await User.getById(id);
+    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy user' });
+    res.json({ success: true, user: user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Lấy user theo username
+export const getUserByUsername = async (req, res) => {
+  try {
+    const { username } = req.query;
+    if (!username) return res.status(400).json({ success: false, message: 'Thiếu username' });
+
+    const users = await User.getByUsername(username);
+    res.json({ success: true, users: users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Lấy user theo email
+export const getUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ success: false, message: 'Thiếu email' });
+
+    const users = await User.getByEmail(email);
+    res.json({ success: true, users: users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+
+// Đổi mật khẩu
 export const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
     const userId = req.user.id;
 
     // Lấy user từ DB
-    const user = await User.findById(userId);
+    const user = await User.getById(userId);
     if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy user' });
 
     // Kiểm tra oldPassword
@@ -33,10 +76,11 @@ export const changePassword = async (req, res) => {
   }
 };
 
+// Đặt lại mật khẩu
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
-    const user = await User.findByEmail(email);
+    const user = await User.getByEmail(email);
     if (!user) return res.status(404).json({ success: false, message: 'Email không tồn tại' });
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -48,6 +92,7 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+// Cập nhật thông tin user
 export const updateProfile = async (req, res) => {
   try {
     const { userId, email, username } = req.body; // Lấy userId từ body
@@ -62,7 +107,7 @@ export const updateProfile = async (req, res) => {
 
     // Kiểm tra email trùng
     if (email) {
-      const existing = await User.findByEmail(email);
+      const existing = await User.getByEmail(email);
       if (existing && existing.id !== userId) {
         // So sánh với userId từ body
         return res
@@ -72,7 +117,7 @@ export const updateProfile = async (req, res) => {
     }
     // Kiểm tra username trùng
     if (username) {
-      const existing = await User.findByUsername(username);
+      const existing = await User.getByUsername(username);
       if (existing && existing.id !== userId) {
         // So sánh với userId từ body
         return res

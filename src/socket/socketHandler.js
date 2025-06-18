@@ -1,6 +1,28 @@
+import Room from '../models/room.js';
+import Player from '../models/player.js';
+import PlayerAnswer from '../models/playerAnswer.js';
+
 const socketHandler = (io) => {
     io.on('connection', (socket) => {
         console.log('New client connected:', socket.id);
+
+        // Host join room
+        socket.on('host-join-room', async ({ pin }) => {
+            try {
+                // Kiểm tra room tồn tại
+                const room = await Room.getByPin(pin);
+                if (!room) {
+                    socket.emit('error', { message: 'Phòng không tồn tại' });
+                    return;
+                }
+
+                // Join socket room
+                socket.join(pin);
+            } catch (err) {
+                console.error('Error in host-join-room:', err);
+                socket.emit('error', { message: 'Lỗi khi host join room', details: err.message });
+            }
+        });
 
         // Player join room
         socket.on('join-room', async ({ pin, player }) => {
@@ -13,20 +35,30 @@ const socketHandler = (io) => {
                 }
 
                 // 2. Lưu player vào DB (cần lưu)
+                const isNicknameExists = await Player.checkNickname(room.id, player.nickname);
+                if (isNicknameExists) {
+                    socket.emit('error', { message: 'Nickname đã tồn tại trong room' });
+                    return;
+                }
+
                 const playerId = await Player.create({
                     room_id: room.id,
-                    nickname: player.name,
-                    avatar_url: player.avatar_url,
+                    nickname: player.nickname,
                     score: 0
                 });
 
                 // 3. Join socket room và thông báo
                 socket.join(pin);
-                socket.to(pin).emit('player-joined', { 
-                    player: { ...player, id: playerId } 
+                io.to(pin).emit('player-joined', { 
+                    player: { 
+                        id: playerId, 
+                        nickname: player.nickname,
+                        score: 0
+                    } 
                 });
             } catch (err) {
-                socket.emit('error', { message: 'Lỗi khi join room' });
+                console.error('Error in join-room:', err);
+                socket.emit('error', { message: 'Lỗi khi join room', details: err.message });
             }
         });
 
@@ -86,8 +118,8 @@ const socketHandler = (io) => {
         // Game over
         socket.on('game-over', async ({ pin }) => {
             try {
-                // 1. Cập nhật trạng thái room trong DB (cần lưu)
-                await Room.update(pin, {
+                // 1. Cập nhật trạng thái room trong DB bằng PIN
+                await Room.updateByPin(pin, {
                     status: 'ended',
                     ended_at: new Date()
                 });

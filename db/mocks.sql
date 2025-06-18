@@ -112,19 +112,24 @@ INSERT INTO `answers` (`question_id`, `content`, `is_correct`) VALUES
 -- -----------------------------------------------------
 -- Dữ liệu mẫu cho bảng rooms
 -- -----------------------------------------------------
-INSERT INTO `rooms` (`pin`, `question_set_id`, `host_id`, `type`, `status`, `created_at`) VALUES
-('123456', 1, 1, 'sync', 'waiting', NOW()),
-('789012', 2, 4, 'async', 'started', NOW()),
-('456789', 3, 2, 'async', 'ended', DATE_SUB(NOW(), INTERVAL 1 DAY)),
-('987654', 5, 4, 'sync', 'waiting', NOW()),
-('654321', 4, 1, 'sync', 'started', NOW());
+INSERT INTO rooms (pin, question_set_id, host_id, type, status, created_at, ended_at) VALUES
+('ABC123', 1, 6, 'async', 'waiting', NOW(), NULL),
+('XYZ789', 2, 2, 'async', 'started', NOW(), NULL),
+('QWE456', 1, 1, 'sync', 'ended', DATE_SUB(NOW(), INTERVAL 1 HOUR), DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+('RTY321', 3, 3, 'sync', 'waiting', NOW(), NULL),
+('UIO654', 2, 1, 'async', 'waiting', NOW(), NULL),
+('ASD987', 4, 4, 'sync', 'started', DATE_SUB(NOW(), INTERVAL 30 MINUTE), NULL),
+('FGH234', 1, 2, 'sync', 'ended', DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+('JKL567', 3, 3, 'async', 'waiting', NOW(), NULL),
+('ZXC890', 2, 4, 'sync', 'waiting', NOW(), NULL),
+('VBN345', 1, 1, 'sync', 'started', DATE_SUB(NOW(), INTERVAL 15 MINUTE), NULL);
 
 -- -----------------------------------------------------
 -- Dữ liệu mẫu cho bảng players
 -- -----------------------------------------------------
 INSERT INTO `players` (`room_id`, `nickname`, `avatar_url`, `score`, `joined_at`) VALUES
 -- Room 1
-(1, 'Player1', NULL, 0, NOW()),
+(1, 'Claude', NULL, 0, NOW()),
 (1, 'ChatGPT', NULL, 0, NOW()),
 (1, 'Copilot', NULL, 0, NOW()),
 -- Room 2
@@ -133,24 +138,15 @@ INSERT INTO `players` (`room_id`, `nickname`, `avatar_url`, `score`, `joined_at`
 -- Room 3
 (3, 'CodeNinja', NULL, 200, DATE_SUB(NOW(), INTERVAL 1 DAY)),
 (3, 'JavaScriptMaster', NULL, 180, DATE_SUB(NOW(), INTERVAL 1 DAY)),
--- Room 5
-(5, 'GeoExpert', NULL, 80, NOW()),
-(5, 'Traveler', NULL, 65, NOW());
+-- Room 4
+(4, 'GeoExpert', NULL, 80, NOW()),
+(4, 'Traveler', NULL, 65, NOW());
 
 -- -----------------------------------------------------
 -- Dữ liệu mẫu cho bảng player_answers
 -- -----------------------------------------------------
 INSERT INTO `player_answers` (`player_id`, `question_id`, `answer_id`, `answer_text`, `is_correct`, `response_time`, `points`) VALUES
--- Player 4 (MathWhiz) in Room 2
 (4, 4, 14, NULL, 1, 8, 100),
-(4, 5, 17, NULL, 1, 10, 50),
--- Player 5 (NumberCruncher) in Room 2
 (5, 4, 13, NULL, 0, 5, 0),
-(5, 5, 17, NULL, 1, 12, 120),
--- Player 6 (CodeNinja) in Room 3
 (6, 7, 26, NULL, 1, 7, 100),
-(6, 8, 30, NULL, 1, 15, 100),
--- Player 7 (JavaScriptMaster) in Room 3
-(7, 7, 26, NULL, 1, 6, 100),
-(7, 8, 29, NULL, 0, 10, 0),
-(7, 9, NULL, 'function isPrime(num) { if (num <= 1) return false; for (let i = 2; i <= Math.sqrt(num); i++) { if (num % i === 0) return false; } return true; }', 1, 30, 80);
+(6, 8, 30, NULL, 1, 15, 100);

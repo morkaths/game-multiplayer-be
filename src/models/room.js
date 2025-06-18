@@ -13,8 +13,16 @@ import pool from '../config/database.js';
  */
 
 const Room = {
+  async getAll() {
+    const [rows] = await pool.query('SELECT * FROM rooms');
+    return rows;
+  },
+  async getByHostId(host_id) {
+    const [rows] = await pool.query('SELECT * FROM rooms WHERE host_id = ?', [host_id]);
+    return rows;
+  },
   async getByPin(pin) {
-    const [rows] = await pool.query('SELECT * FROM rooms WHERE pin = ?', [pin]);
+    const [rows] = await pool.query('SELECT * FROM rooms WHERE pin = ? AND status = ?', [pin, 'waiting']);
     return rows[0] || null;
   },
   async getById(id) {
@@ -33,6 +41,19 @@ const Room = {
       'UPDATE rooms SET status=?, ended_at=? WHERE id=?',
       [data.status, data.ended_at, id]
     );
+  },
+  async updateByPin(pin, data) {
+    if (data.status === 'ended') {
+      await pool.query(
+        'UPDATE rooms SET status=?, ended_at=CURRENT_TIMESTAMP WHERE pin=?',
+        [data.status, pin]
+      );
+    } else {
+      await pool.query(
+        'UPDATE rooms SET status=? WHERE pin=?',
+        [data.status, pin]
+      );
+    }
   },
   async delete(id) {
     await pool.query('DELETE FROM rooms WHERE id=?', [id]);

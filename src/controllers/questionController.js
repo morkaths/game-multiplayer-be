@@ -8,10 +8,9 @@ export const getQuestions = async (req, res) => {
   try {
     const { question_set_id } = req.query;
     if (!question_set_id) return res.status(400).json({ success: false, message: "Thiếu question_set_id" });
+
     const questions = await Question.getBySetId(question_set_id);
-    if (questions.length === 0) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy danh sách câu hỏi" });
-    }
+    if (questions.length === 0) return res.status(404).json({ success: false, message: "Không tìm thấy danh sách câu hỏi" });
     res.json({ success: true, questions: questions });
   } catch (err) {
     res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
@@ -23,9 +22,9 @@ export const getQuestion = async (req, res) => {
   try {
     const { id } = req.params;
     if (!id) return res.status(400).json({ success: false, message: "Thiếu id" });
+
     const question = await Question.getById(id);
-    if (question.length === 0)
-      return res.status(404).json({ success: false, message: "Không tìm thấy câu hỏi" });
+    if (question.length === 0) return res.status(404).json({ success: false, message: "Không tìm thấy câu hỏi" });
     res.json({ success: true, question: question });
   } catch (err) {
     res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
@@ -42,12 +41,9 @@ export const createQuestion = async (req, res) => {
       ? `/uploads/question/${req.file.filename}`
       : null;
 
-    const [result] = await pool.query(
-      "INSERT INTO questions (question_set_id, content, image_url, type, points, time_limit) VALUES (?, ?, ?, ?, ?, ?)",
-      [question_set_id, content, image_url, type, points, time_limit]
-    );
-
-    res.status(201).json({ success: true, question_id: result.insertId });
+    const id = await Question.create({ question_set_id, content, image_url, type, points, time_limit });
+    if (!id) return res.status(400).json({ success: false, message: "Thêm câu hỏi thất bại" });
+    res.status(201).json({ success: true, question_id: id });
   } catch (err) {
     res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
   }
@@ -108,7 +104,23 @@ export const deleteQuestion = async (req, res) => {
     const { id } = req.params;
     if (!req.user) return res.status(401).json({ success: false, message: "Bạn cần đăng nhập!" });
 
-    await pool.query("DELETE FROM questions WHERE id=?", [id]);
+    let oldImageUrl = null;
+    if (req.file) {
+      const [oldQuestion] = await pool.query("SELECT image_url FROM questions WHERE id = ?", [id]);
+      if (oldQuestion.length > 0) {
+        oldImageUrl = oldQuestion[0].image_url;
+      }
+    }
+
+    await Question.delete(id);
+
+    // Xóa ảnh cũ nếu có
+    if (oldImageUrl) {
+      const oldImagePath = path.join(process.cwd(), oldImageUrl);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
     res.json({ success: true, message: "Xóa thành công" });
   } catch (err) {
     res

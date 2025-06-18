@@ -13,8 +13,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     `role` ENUM('user', 'admin') NULL DEFAULT 'user',
     `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
 );
-ALTER TABLE `users` ADD UNIQUE `users_username_unique`(`username`);
-ALTER TABLE `users` ADD UNIQUE `users_email_unique`(`email`);
+ALTER TABLE `users`
+    ADD UNIQUE `users_username_unique`(`username`), 
+    ADD UNIQUE `users_email_unique`(`email`);
 
 -- Tạo bảng question_sets
 CREATE TABLE IF NOT EXISTS `question_sets` (
@@ -75,26 +76,28 @@ CREATE TABLE IF NOT EXISTS `player_answers` (
     `answer_text` TEXT NULL,
     `is_correct` BOOLEAN NULL,
     `response_time` INT NOT NULL,
-    `points` INT NULL,
-    PRIMARY KEY (`player_id`, `question_id`)
+    `points` INT NULL
 );
+ALTER TABLE `player_answers` ADD UNIQUE `unique_player_question` (`player_id`, `question_id`);
 
 -- Liên kết FOREIGN KEY
-ALTER TABLE `player_answers` ADD CONSTRAINT `player_answers_answer_id_foreign` FOREIGN KEY(`answer_id`) REFERENCES `answers`(`id`);
-ALTER TABLE `player_answers` ADD CONSTRAINT `player_answers_player_id_foreign` FOREIGN KEY(`player_id`) REFERENCES `players`(`id`);
-ALTER TABLE `question_sets` ADD CONSTRAINT `question_sets_created_by_foreign` FOREIGN KEY(`created_by`) REFERENCES `users`(`id`);
-ALTER TABLE `player_answers` ADD CONSTRAINT `player_answers_question_id_foreign` FOREIGN KEY(`question_id`) REFERENCES `questions`(`id`);
-ALTER TABLE `rooms` ADD CONSTRAINT `rooms_host_id_foreign` FOREIGN KEY(`host_id`) REFERENCES `users`(`id`);
-ALTER TABLE `answers` ADD CONSTRAINT `answers_question_id_foreign` FOREIGN KEY(`question_id`) REFERENCES `questions`(`id`);
-ALTER TABLE `questions` ADD CONSTRAINT `questions_question_set_id_foreign` FOREIGN KEY(`question_set_id`) REFERENCES `question_sets`(`id`);
-ALTER TABLE `rooms` ADD CONSTRAINT `rooms_question_set_id_foreign` FOREIGN KEY(`question_set_id`) REFERENCES `question_sets`(`id`);
-ALTER TABLE `players` ADD CONSTRAINT `players_room_id_foreign` FOREIGN KEY(`room_id`) REFERENCES `rooms`(`id`);
+ALTER TABLE `question_sets`
+  ADD CONSTRAINT `question_sets_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`);
 
--- Bạn có thể thêm các bảng khác ở đây, ví dụ:
--- CREATE TABLE IF NOT EXISTS `games` (
---   `id` INT AUTO_INCREMENT PRIMARY KEY,
---   `name` VARCHAR(100) NOT NULL,
---   `created_by` INT NOT NULL,
---   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---   FOREIGN KEY (`created_by`) REFERENCES `users`(`id`)
--- ); 
+ALTER TABLE `questions`
+  ADD CONSTRAINT `questions_question_set_id_foreign` FOREIGN KEY (`question_set_id`) REFERENCES `question_sets` (`id`);
+
+ALTER TABLE `answers`
+  ADD CONSTRAINT `answers_question_id_foreign` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`);
+
+ALTER TABLE `rooms`
+  ADD CONSTRAINT `rooms_host_id_foreign` FOREIGN KEY (`host_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `rooms_question_set_id_foreign` FOREIGN KEY (`question_set_id`) REFERENCES `question_sets` (`id`);
+
+ALTER TABLE `players`
+  ADD CONSTRAINT `players_room_id_foreign` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`);
+
+ALTER TABLE `player_answers`
+  ADD CONSTRAINT `player_answers_answer_id_foreign` FOREIGN KEY (`answer_id`) REFERENCES `answers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `player_answers_player_id_foreign` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `player_answers_question_id_foreign` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE CASCADE;

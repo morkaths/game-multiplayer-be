@@ -18,6 +18,7 @@ const QuestionSet = {
         qs.title, 
         qs.description,
         qs.image_url,
+        qs.created_by,
         u.username as author,
         (SELECT COUNT(*) FROM questions q WHERE q.question_set_id = qs.id) as questions
       FROM 
@@ -34,6 +35,7 @@ const QuestionSet = {
         qs.title,
         qs.description,
         qs.image_url,
+        qs.created_by,
         u.username as author,
         (SELECT COUNT(*) FROM questions q WHERE q.question_set_id = qs.id) as questions
       FROM
@@ -52,6 +54,7 @@ const QuestionSet = {
         qs.title, 
         qs.description,
         qs.image_url,
+        qs.created_by,
         u.username as author,
         (SELECT COUNT(*) FROM questions q WHERE q.question_set_id = qs.id) as questions
       FROM
@@ -65,8 +68,8 @@ const QuestionSet = {
   },
   async create(data) {
     const [result] = await pool.query(
-      'INSERT INTO question_sets (title, description, created_by) VALUES (?, ?, ?)',
-      [data.title, data.description, data.created_by]
+      'INSERT INTO question_sets (title, description, image_url, created_by) VALUES (?, ?, ?, ?)',
+      [data.title, data.description, data.image_url, data.created_by]
     );
     return result.insertId;
   },

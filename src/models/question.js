@@ -6,7 +6,7 @@ import pool from '../config/database.js';
  * @property {number} question_set_id - ID của bộ câu hỏi
  * @property {string} content - Nội dung câu hỏi
  * @property {string} type - Loại câu hỏi (choice, text)
- * @property {number} point - Điểm của câu hỏi
+ * @property {number} points - Điểm của câu hỏi
  * @property {number} time_limit - Thời gian làm câu hỏi (giây)
  * @property {string} [image_url] - URL hình ảnh minh họa (nếu có)
  */
@@ -22,15 +22,15 @@ const Question = {
   },
   async create(data) {
     const [result] = await pool.query(
-      'INSERT INTO questions (question_set_id, content, image_url, type, time_limit, difficulty) VALUES (?, ?, ?, ?, ?, ?)',
-      [data.question_set_id, data.content, data.image_url, data.type, data.time_limit, data.difficulty]
+      "INSERT INTO questions (question_set_id, content, image_url, type, points, time_limit) VALUES (?, ?, ?, ?, ?, ?)",
+      [data.question_set_id, data.content, data.image_url, data.type, data.points, data.time_limit]
     );
     return result.insertId;
   },
   async update(id, data) {
     await pool.query(
-      'UPDATE questions SET content=?, image_url=?, type=?, time_limit=?, difficulty=? WHERE id=?',
-      [data.content, data.image_url, data.type, data.time_limit, data.difficulty, id]
+      "UPDATE questions SET content=?, image_url=?, type=?, points=?, time_limit=? WHERE id=?",
+      [data.content, data.image_url, data.type, data.points, data.time_limit, id]
     );
   },
   async delete(id) {
