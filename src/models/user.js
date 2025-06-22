@@ -5,21 +5,24 @@ const User = {
   // Đăng ký người dùng mới
   register: async (userData) => {
     try {
-      const query = 'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)';
+      const query = 'INSERT INTO users (username, email, password, role, isGoogleAccount) VALUES (?, ?, ?, ?, ?)';
       const role = userData.role || 'user'; // Mặc định là 'user' nếu không chỉ định
+      const isGoogleAccount = userData.isGoogleAccount || false;
 
       const [result] = await pool.query(query, [
         userData.username,
         userData.email,
         userData.password,
-        role
+        role,
+        isGoogleAccount
       ]);
 
       return {
         id: result.insertId,
         username: userData.username,
         email: userData.email,
-        role: role
+        role: role,
+        isGoogleAccount: isGoogleAccount
       };
     } catch (err) {
       throw err;
@@ -127,6 +130,28 @@ const User = {
     } catch (err) {
       throw err;
     }
+  },
+  linkPassword: async (email, newHashedPassword) => {
+    try {
+      await pool.query('UPDATE users SET password=?, isGoogleAccount=false WHERE email=?', [newHashedPassword, email]);
+    } catch (err) {
+      throw err;
+    }
+  },
+  saveResetToken: async (userId, token, expires) => {
+    const query = 'INSERT INTO password_reset_tokens (user_id, token, expires) VALUES (?, ?, ?)';
+    await pool.query(query, [userId, token, expires]);
+  },
+
+  findByResetToken: async (token) => {
+    const query = 'SELECT * FROM password_reset_tokens WHERE token = ?';
+    const [rows] = await pool.query(query, [token]);
+    return rows.length > 0 ? rows[0] : null;
+  },
+
+  deleteResetToken: async (token) => {
+    const query = 'DELETE FROM password_reset_tokens WHERE token = ?';
+    await pool.query(query, [token]);
   }
 };
 

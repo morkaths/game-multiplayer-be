@@ -9,9 +9,13 @@ import answerRoutes from './answerRoutes.js';
 import roomRoutes from './roomRoutes.js';
 import playerRoutes from './playerRoutes.js';
 import playerAnswerRoutes from './playerAnswerRoutes.js';
+import AuthController from '../controllers/authController.js';
 const router = express.Router();
 
 //router.get('/', getHomePage);
+
+//Route Test API
+router.get('/test', getTestPage);
 
 // Thêm routes xác thực
 router.use('/auth', authRoutes);
@@ -26,4 +30,6 @@ router.use('/answers', answerRoutes);
 router.use('/rooms', roomRoutes);
 router.use('/players', playerRoutes);
 router.use('/player-answers', playerAnswerRoutes);
+    
+
 export default router;

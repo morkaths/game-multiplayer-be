@@ -11,20 +11,43 @@
     "keywords": [],
     "author": "Vuong1411",
     "license": "ISC",
-    "description": "",
+    "description": "Một dự án game multiplayer sử dụng React (client) và Node.js (server) với Socket.IO cho kết nối thời gian thực.",
     "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.0",
+        "@mui/material": "^7.1.2",
+        "@reduxjs/toolkit": "^2.8.2",
+        "axios": "^1.10.0",
         "bcryptjs": "^3.0.2",
         "cors": "^2.8.5",
         "dotenv": "^16.5.0",
         "express": "^5.1.0",
+        "google-auth-library": "^10.1.0",
         "jsonwebtoken": "^9.0.2",
-        "mongoose": "^8.13.2",
+        "mongoose": "^8.16.0",
         "multer": "^1.4.5-lts.2",
         "mysql2": "^3.14.1",
+        "node-fetch": "^3.3.2",
+        "nodemailer": "^7.0.3",
+        "react-redux": "^9.2.0",
+        "react-router-dom": "^7.6.2",
+        "sass": "^1.89.2",
         "socket.io": "^4.8.1",
+        "socket.io-client": "^4.8.1",
         "socketio": "^1.0.0"
     },
     "devDependencies": {
-        "nodemon": "^3.1.9"
-    }
+        "nodemon": "^3.1.10"
+    },
+    "directories": {
+        "test": "test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/morkaths/game-multiplayer-be.git"
+    },
+    "bugs": {
+        "url": "https://github.com/morkaths/game-multiplayer-be/issues"
+    },
+    "homepage": "https://github.com/morkaths/game-multiplayer-be#readme"
 }
