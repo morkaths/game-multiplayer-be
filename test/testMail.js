@@ -18,14 +18,14 @@ const transporter = nodemailer.createTransport({
 const mailOptions = {
   from: `"Gửi thử nghiệm" <${process.env.EMAIL_USER}>`,
   to: process.env.EMAIL_USER, // Gửi cho chính mình để test
-  subject: '✅ Gửi thành công từ testMail.js',
+  subject: 'Gửi thành công từ testMail.js',
   html: `<p>Đây là email kiểm tra chức năng gửi mail trong chức năng quên mật khẩu.</p>`
 };
 
 transporter.sendMail(mailOptions)
   .then(info => {
-    console.log('✅ Gửi thành công:', info.response);
+    console.log('Gửi thành công:', info.response);
   })
   .catch(error => {
-    console.error('❌ Gửi thất bại:', error);
+    console.error('Gửi thất bại:', error);
   });
