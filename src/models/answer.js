@@ -19,7 +19,7 @@ const Answer = {
   },
   async getCorrectAnswer(question_id) {
     const [rows] = await pool.query('SELECT * FROM answers WHERE question_id = ? AND is_correct = true', [question_id]);
-    return rows[0] || null;
+    return rows;
   },
   async create(data) {
     const [result] = await pool.query(

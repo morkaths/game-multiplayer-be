@@ -16,6 +16,18 @@ const Question = {
     const [rows] = await pool.query('SELECT * FROM questions WHERE question_set_id = ?', [question_set_id]);
     return rows;
   },
+  async getIdsBySetId(question_set_id) {
+    const [rows] = await pool.query(
+      `SELECT id FROM questions WHERE question_set_id = ?`, [question_set_id]
+    );
+    return rows.map(row => row.id);
+  },
+  async getFirstBySetId(question_set_id) {
+    const [rows] = await pool.query(
+      `SELECT * FROM questions WHERE question_set_id = ? ORDER BY id ASC LIMIT 1`, [question_set_id]
+    );
+    return rows[0] || null;
+  },
   async getById(id) {
     const [rows] = await pool.query('SELECT * FROM questions WHERE id = ?', [id]);
     return rows[0] || null;

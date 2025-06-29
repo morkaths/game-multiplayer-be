@@ -13,13 +13,15 @@ export const submitAnswer = async (req, res) => {
     const basePoints = question?.points;
 
     // Lấy đáp án đúng
-    const correctAnswer = await Answer.getCorrectAnswer(question_id);
+    const correctAnswers = await Answer.getCorrectAnswer(question_id);
 
     let is_correct = false;
     if (answer_id) {
-      is_correct = correctAnswer && correctAnswer.id === answer_id;
+      is_correct = correctAnswers.some(ans => ans.id === answer_id);
     } else if (answer_text) {
-      is_correct = correctAnswer && correctAnswer.content.trim().toLowerCase() === answer_text.trim().toLowerCase();
+      is_correct = correctAnswers.some(ans =>
+        ans.content.trim().toLowerCase() === answer_text.trim().toLowerCase()
+    );
     }
     // Tính điểm sử dụng hàm tiện ích
     const points = PlayerAnswer.calculatePoints(basePoints, response_time, is_correct);

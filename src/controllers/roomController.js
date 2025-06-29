@@ -17,7 +17,7 @@ export const getRoomsByHostId = async (req, res) => {
   try {
     const { host_id } = req.query;
     if (!host_id) return res.status(400).json({ success: false, message: 'Thiếu host_id' });
-    
+
     const rooms = await Room.getByHostId(host_id);
     if (rooms.length === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy danh sách phòng' });
     res.json({ success: true, rooms: rooms });
@@ -64,11 +64,38 @@ function generatePin(length = 6) {
   return pin;
 }
 
+// Lấy danh sách phòng theo bộ câu hỏi
+export const getRoomsByQuestionSetId = async (req, res) => {
+  try {
+    const { question_set_id } = req.params;
+    if (!question_set_id) {
+      return res.status(400).json({ success: false, message: 'Thiếu question_set_id' });
+    }
+    const rooms = await Room.getByQuestionSetId(question_set_id);
+    res.json({ success: true, rooms });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Lấy danh sách phòng của tôi
+export const getMyRooms = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Bạn cần đăng nhập!' });
+    }
+    const rooms = await Room.getByHostId(req.user.id);
+    res.json({ success: true, rooms });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
 // Tạo phòng mới (cần đăng nhập)
 export const createRoom = async (req, res) => {
   try {
     const { question_set_id, type, status } = req.body;
-    
+
     // Kiểm tra quyền đăng nhập
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Bạn cần đăng nhập!' });
@@ -149,3 +176,60 @@ export const deleteRoom = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
   }
 };
+
+export const deleteManyRooms = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'Thiếu danh sách id cần xóa' });
+    }
+    // (Có thể kiểm tra quyền ở đây nếu cần)
+    const deleted = await Room.deleteMany(ids);
+    res.json({ success: true, message: `Đã xóa thành công ${deleted} hàng` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Báo cáo tổng quan của tôi
+export const getRoomReports = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ success: false, message: 'Bạn cần đăng nhập!' });
+    const { type } = req.query;
+    if (!type || (type !== 'sync' && type !== 'async')) {
+      return res.status(400).json({ success: false, message: 'Type phải là sync hoặc async' });
+    }
+    const reports = await Room.reports(req.user.id, type);
+    res.json({ success: true, reports });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Báo cáo chi tiết của phòng 
+export const getRoomReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const report = await Room.report(id);
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy phòng' });
+    }
+    res.json({ success: true, report });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Danh sách báo cáo người chơi
+export const getPlayerReports = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("Room:", req.params)
+    const reports = await Room.playerReports(id);
+    console.log("Player:", reports)
+    res.json({ success: true, reports });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
