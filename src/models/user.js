@@ -9,6 +9,8 @@ const User = {
       const role = userData.role || 'user'; // Mặc định là 'user' nếu không chỉ định
       const isGoogleAccount = userData.isGoogleAccount || false;
 
+       console.log("[REGISTER USER] Data chuẩn bị insert:", userData);
+       
       const [result] = await pool.query(query, [
         userData.username,
         userData.email,
