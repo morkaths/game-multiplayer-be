@@ -92,45 +92,120 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-// Cập nhật thông tin user
+// Cập nhật user (admin)
+export const updateUser = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Chỉ admin mới được phép thực hiện thao tác này" });
+    }
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Không cho phép cập nhật id
+    if (updateData.id) delete updateData.id;
+
+    // Nếu cập nhật email, kiểm tra trùng
+    if (updateData.email) {
+      const existing = await User.getByEmail(updateData.email);
+      if (existing && existing.id != id) {
+        return res.status(400).json({ success: false, message: "Email đã tồn tại" });
+      }
+    }
+
+    // Nếu cập nhật username, kiểm tra trùng
+    if (updateData.username) {
+      const existing = await User.getByUsername(updateData.username);
+      if (existing && existing.id != id) {
+        return res.status(400).json({ success: false, message: "Username đã tồn tại" });
+      }
+    }
+
+    await User.updateUser(id, updateData);
+    res.json({ success: true, message: "Cập nhật thành công" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
+
+// Cập nhật profile (user)
 export const updateProfile = async (req, res) => {
   try {
-    const { userId, email, username } = req.body; // Lấy userId từ body
-
-    // Kiểm tra quyền (chỉ admin mới được update user khác)
-    if (userId !== req.user.id && req.user.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Không có quyền thực hiện thao tác này",
-      });
-    }
+    const userId = req.user.id;
+    const { email, username } = req.body;
 
     // Kiểm tra email trùng
     if (email) {
       const existing = await User.getByEmail(email);
       if (existing && existing.id !== userId) {
-        // So sánh với userId từ body
-        return res
-          .status(400)
-          .json({ success: false, message: "Email đã tồn tại" });
+        return res.status(400).json({ success: false, message: "Email đã tồn tại" });
       }
     }
+
     // Kiểm tra username trùng
     if (username) {
       const existing = await User.getByUsername(username);
       if (existing && existing.id !== userId) {
-        // So sánh với userId từ body
-        return res
-          .status(400)
-          .json({ success: false, message: "Username đã tồn tại" });
+        return res.status(400).json({ success: false, message: "Username đã tồn tại" });
       }
     }
 
-    await User.updateProfile(userId, { email, username }); // Sử dụng userId từ body
-    res.json({ success: true, message: "Cập nhật thành công" });
+    await User.updateUser(userId, { email, username });
+    res.json({ success: true, message: "Cập nhật profile thành công" });
   } catch (err) {
-    res
-      .status(500)
-      .json({ success: false, message: "Lỗi server", error: err.message });
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Thêm người dùng mới
+export const createUser = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Chỉ admin mới được phép thêm người dùng" });
+    }
+    const { username, email, password, role, isGoogleAccount } = req.body;
+
+    // Kiểm tra trùng email/username
+    const emailExists = await User.getByEmail(email);
+    if (emailExists) {
+      return res.status(400).json({ success: false, message: "Email đã tồn tại" });
+    }
+    const usernameExists = await User.getByUsername(username);
+    if (usernameExists && usernameExists.length > 0) {
+      return res.status(400).json({ success: false, message: "Username đã tồn tại" });
+    }
+
+    // Hash password nếu không phải tài khoản Google
+    let hashedPassword = password;
+    if (!isGoogleAccount && password) {
+      const bcrypt = await import('bcryptjs');
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    const newUser = await User.register({
+      username,
+      email,
+      password: hashedPassword,
+      role,
+      isGoogleAccount
+    });
+
+    res.json({ success: true, message: "Thêm người dùng thành công", user: newUser });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+}
+
+// Xóa user (admin hoặc chính user)
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Chỉ cho phép admin hoặc chính user xóa
+    if (req.user.role !== 'admin' && req.user.id != id) {
+      return res.status(403).json({ success: false, message: 'Không có quyền thực hiện thao tác này' });
+    }
+    await User.deleteUser(id);
+    res.json({ success: true, message: 'Xóa user thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
   }
 };

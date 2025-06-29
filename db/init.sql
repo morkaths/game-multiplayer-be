@@ -84,20 +84,20 @@ ALTER TABLE `player_answers` ADD UNIQUE `unique_player_question` (`player_id`, `
 
 -- Liên kết FOREIGN KEY
 ALTER TABLE `question_sets`
-  ADD CONSTRAINT `question_sets_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `question_sets_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 ALTER TABLE `questions`
-  ADD CONSTRAINT `questions_question_set_id_foreign` FOREIGN KEY (`question_set_id`) REFERENCES `question_sets` (`id`);
+  ADD CONSTRAINT `questions_question_set_id_foreign` FOREIGN KEY (`question_set_id`) REFERENCES `question_sets`(`id`) ON DELETE CASCADE;
 
 ALTER TABLE `answers`
-  ADD CONSTRAINT `answers_question_id_foreign` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`);
+  ADD CONSTRAINT `answers_question_id_foreign` FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE CASCADE;
 
 ALTER TABLE `rooms`
-  ADD CONSTRAINT `rooms_host_id_foreign` FOREIGN KEY (`host_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `rooms_question_set_id_foreign` FOREIGN KEY (`question_set_id`) REFERENCES `question_sets` (`id`);
+  ADD CONSTRAINT `rooms_host_id_foreign` FOREIGN KEY (`host_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `rooms_question_set_id_foreign` FOREIGN KEY (`question_set_id`) REFERENCES `question_sets` (`id`) ON DELETE CASCADE;
 
 ALTER TABLE `players`
-  ADD CONSTRAINT `players_room_id_foreign` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`);
+  ADD CONSTRAINT `players_room_id_foreign` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE;
 
 ALTER TABLE `player_answers`
   ADD CONSTRAINT `player_answers_answer_id_foreign` FOREIGN KEY (`answer_id`) REFERENCES `answers` (`id`) ON DELETE SET NULL,

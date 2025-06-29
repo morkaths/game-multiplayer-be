@@ -105,6 +105,23 @@ const User = {
     }
   },
 
+  // Cập nhật thông tin người dùng
+  updateUser: async (id, updateData) => {
+    try {
+      const fields = [];
+      const values = [];
+      for (const key in updateData) {
+        fields.push(`${key}=?`);
+        values.push(updateData[key]);
+      }
+      if (fields.length === 0) return;
+      values.push(id);
+      await pool.query(`UPDATE users SET ${fields.join(', ')} WHERE id=?`, values);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   // Thêm hàm này vào object User
   updatePassword: async (id, newHashedPassword) => {
     try {
@@ -114,25 +131,6 @@ const User = {
     }
   },
 
-  updateProfile: async (id, { email, username }) => {
-    try {
-      const fields = [];
-      const values = [];
-      if (email) {
-        fields.push('email=?');
-        values.push(email);
-      }
-      if (username) {
-        fields.push('username=?');
-        values.push(username);
-      }
-      if (fields.length === 0) return;
-      values.push(id);
-      await pool.query(`UPDATE users SET ${fields.join(', ')} WHERE id=?`, values);
-    } catch (err) {
-      throw err;
-    }
-  },
   linkPassword: async (email, newHashedPassword) => {
     try {
       await pool.query('UPDATE users SET password=?, isGoogleAccount=false WHERE email=?', [newHashedPassword, email]);
@@ -154,7 +152,17 @@ const User = {
   deleteResetToken: async (token) => {
     const query = 'DELETE FROM password_reset_tokens WHERE token = ?';
     await pool.query(query, [token]);
-  }
+  },
+
+  // Xóa người dùng
+  deleteUser: async (id) => {
+    try {
+      await pool.query('DELETE FROM users WHERE id=?', [id]);
+    } catch (err) {
+      throw err;
+    }
+  },
+
 };
 
 export default User; 

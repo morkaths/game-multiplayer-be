@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import pool from "../config/database.js";
 import Question from "../models/question.js";
+import { deleteImageOnCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUtils.js';
 
 // Lấy tất cả câu hỏi của một bộ câu hỏi
 export const getQuestions = async (req, res) => {
@@ -34,12 +35,8 @@ export const getQuestion = async (req, res) => {
 // Tạo mới một câu hỏi (chỉ user đã đăng nhập mới được phép)
 export const createQuestion = async (req, res) => {
   try {
-    const { question_set_id, content, type, points, time_limit } = req.body;
+    const { question_set_id, content, type, points, time_limit, image_url } = req.body;
     if (!req.user) return res.status(401).json({ success: false, message: "Bạn cần đăng nhập!" });
-
-    const image_url = req.file
-      ? `/uploads/question/${req.file.filename}`
-      : null;
 
     const id = await Question.create({ question_set_id, content, image_url, type, points, time_limit });
     if (!id) return res.status(400).json({ success: false, message: "Thêm câu hỏi thất bại" });
@@ -53,25 +50,26 @@ export const createQuestion = async (req, res) => {
 export const updateQuestion = async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, type, points, time_limit } = req.body;
+    const { content, type, points, time_limit, image_url } = req.body;
 
     if (!req.user) return res.status(401).json({ success: false, message: "Bạn cần đăng nhập!" });
     if (!id) return res.status(400).json({ success: false, message: "Thiếu id" });
 
+    // Lấy ảnh cũ từ DB
+    const [rows] = await pool.query("SELECT image_url FROM questions WHERE id = ?", [id]);
     let oldImageUrl = null;
-    if (req.file) {
-      const [oldQuestion] = await pool.query("SELECT image_url FROM questions WHERE id = ?", [id]);
-      if (oldQuestion.length > 0) {
-        oldImageUrl = oldQuestion[0].image_url;
-      }
+    if (rows.length > 0) {
+      oldImageUrl = rows[0].image_url;
     }
-    const query = req.file
-      ? "UPDATE questions SET content=?, image_url=?, type=?, points=?, time_limit=? WHERE id=?"
-      : "UPDATE questions SET content=?, type=?, points=?, time_limit=? WHERE id=?";
-    
-    const params = req.file
-      ? [content, `/uploads/question/${req.file.filename}`, type, points, time_limit, id]
-      : [content, type, points, time_limit, id];
+
+    let query, params;
+    if (typeof image_url !== 'undefined') {
+      query = "UPDATE questions SET content=?, image_url=?, type=?, points=?, time_limit=? WHERE id=?";
+      params = [content, image_url, type, points, time_limit, id];
+    } else {
+      query = "UPDATE questions SET content=?, type=?, points=?, time_limit=? WHERE id=?";
+      params = [content, type, points, time_limit, id];
+    }
 
     const [result] = await pool.query(query, params);
 
@@ -82,19 +80,17 @@ export const updateQuestion = async (req, res) => {
       });
     }
 
-    // Xóa ảnh cũ nếu có
-    if (oldImageUrl && req.file) {
-      const oldImagePath = path.join(process.cwd(), oldImageUrl);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
+    // Nếu có ảnh cũ và cập nhật ảnh mới (image_url khác ảnh cũ), xóa ảnh cũ trên Cloudinary nếu là ảnh Cloudinary
+    if (oldImageUrl && typeof image_url !== 'undefined' && image_url && image_url !== oldImageUrl) {
+      const publicId = getPublicIdFromUrl(oldImageUrl);
+      if (publicId) {
+        await deleteImageOnCloudinary(publicId);
       }
     }
 
     res.json({ success: true, message: "Cập nhật thành công" });
   } catch (err) {
-    res
-      .status(500)
-      .json({ success: false, message: "Lỗi server", error: err.message });
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
   }
 };
 
@@ -104,27 +100,26 @@ export const deleteQuestion = async (req, res) => {
     const { id } = req.params;
     if (!req.user) return res.status(401).json({ success: false, message: "Bạn cần đăng nhập!" });
 
-    let oldImageUrl = null;
-    if (req.file) {
-      const [oldQuestion] = await pool.query("SELECT image_url FROM questions WHERE id = ?", [id]);
-      if (oldQuestion.length > 0) {
-        oldImageUrl = oldQuestion[0].image_url;
-      }
+    // Lấy image_url từ DB
+    const [rows] = await pool.query("SELECT image_url FROM questions WHERE id = ?", [id]);
+    let image_url = null;
+    if (rows.length > 0) {
+      image_url = rows[0].image_url;
     }
 
     await Question.delete(id);
 
-    // Xóa ảnh cũ nếu có
-    if (oldImageUrl) {
-      const oldImagePath = path.join(process.cwd(), oldImageUrl);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
+    // Xóa ảnh trên Cloudinary nếu có
+    if (image_url && image_url.includes('cloudinary.com')) {
+      const publicId = getPublicIdFromUrl(image_url);
+      if (publicId) {
+        await deleteImageOnCloudinary(publicId);
       }
     }
+
     res.json({ success: true, message: "Xóa thành công" });
   } catch (err) {
-    res
-      .status(500)
-      .json({ success: false, message: "Lỗi server", error: err.message });
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
   }
 };
+

@@ -65,9 +65,6 @@ const Room = {
   async deleteMany(ids) {
     if (!Array.isArray(ids) || ids.length === 0) return 0;
     const placeholders = ids.map(() => '?').join(',');
-    // Xóa player trước
-    await pool.query(`DELETE FROM players WHERE room_id IN (${placeholders})`, ids);
-    // Xóa room
     const [result] = await pool.query(
       `DELETE FROM rooms WHERE id IN (${placeholders})`,
       ids
