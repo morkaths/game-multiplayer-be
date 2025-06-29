@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     `password` VARCHAR(255) NOT NULL,
     `email` VARCHAR(100) NOT NULL,
     `role` ENUM('user', 'admin') NULL DEFAULT 'user',
-    `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
+    `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    -- Thêm cột isGoogleAccount để đánh dấu tài khoản từ Google
+    `isGoogleAccount` BOOLEAN DEFAULT FALSE
 );
 ALTER TABLE `users`
     ADD UNIQUE `users_username_unique`(`username`), 

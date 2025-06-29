@@ -19,8 +19,9 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: 'http://localhost:3000',
     methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 app.use(express.json());
@@ -50,7 +51,7 @@ socketHandler(io);
 // Start server
 // =====================
 const HOST = process.env.HOST || 'localhost';
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 server.listen(PORT, () => {
     console.log('Server is running:');
     console.log(`- API URL: http://${HOST}:${PORT}`);
