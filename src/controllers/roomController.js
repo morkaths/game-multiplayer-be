@@ -224,9 +224,28 @@ export const getRoomReport = async (req, res) => {
 export const getPlayerReports = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Room:", req.params)
     const reports = await Room.playerReports(id);
-    console.log("Player:", reports)
+    res.json({ success: true, reports });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Lấy báo cáo chi tiết đáp án của 1 player
+export const getPlayerAnswerReports = async (req, res) => {
+  try {
+    const { player_id } = req.params;
+    const reports = await Room.playerAnswerReports(player_id);
+    res.json({ success: true, reports });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
+export const getRoomQuestionReports = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reports = await Room.questionCorrectReports(id);
     res.json({ success: true, reports });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });

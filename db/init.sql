@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `password` VARCHAR(255) NOT NULL,
     `email` VARCHAR(100) NOT NULL,
     `role` ENUM('user', 'admin') NULL DEFAULT 'user',
+    `avatar_url` VARCHAR(255) NULL,
     `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-    -- Thêm cột isGoogleAccount để đánh dấu tài khoản từ Google
     `isGoogleAccount` BOOLEAN DEFAULT FALSE
 );
 ALTER TABLE `users`
@@ -65,7 +65,6 @@ CREATE TABLE IF NOT EXISTS `players` (
     `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `room_id` INT NULL,
     `nickname` VARCHAR(100) NOT NULL,
-    `avatar_url` VARCHAR(255) NULL,
     `score` INT NULL,
     `joined_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP
 );

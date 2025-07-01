@@ -64,6 +64,18 @@ export const getQuestionSet = async (req, res) => {
   }
 };
 
+export const searchQuestionSets = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ success: false, message: "Thiếu từ khóa tìm kiếm" });
+
+    const results = await QuestionSet.search(query);
+    res.json({ success: true, question_sets: results });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
+
 // Tạo mới bộ câu hỏi (chỉ user đã đăng nhập)
 export const createQuestionSet = async (req, res) => {
   try {
@@ -161,3 +173,18 @@ export const deleteQuestionSet = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
   }
 };
+
+// Lấy thống kê cho 1 bộ câu hỏi
+export const getQuestionSetStats = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, message: "Thiếu id" });
+
+    const stats = await QuestionSet.stats(id);
+    res.json({ success: true, stats });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
+
+

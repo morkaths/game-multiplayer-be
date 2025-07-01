@@ -105,7 +105,7 @@ const Room = {
         COUNT(DISTINCT q.id) AS total_questions,
         SUM(CASE WHEN pa.is_correct = 1 THEN 1 ELSE 0 END) AS total_correct_answers,
         SUM(CASE WHEN pa.is_correct = 0 THEN 1 ELSE 0 END) AS total_wrong_answers,
-        AVG(pa.response_time) AS avg_response_time
+        ROUND(AVG(pa.response_time), 2) AS avg_response_time
       FROM rooms r
       LEFT JOIN users u ON r.host_id = u.id
       LEFT JOIN question_sets qs ON r.question_set_id = qs.id
@@ -131,6 +131,47 @@ const Room = {
       GROUP BY p.id, p.nickname, p.score
       ORDER BY p.score DESC
     `, [room_id]);
+    return rows;
+  },
+  async playerAnswerReports(player_id) {
+    const [rows] = await pool.query(`
+      SELECT
+        q.id AS question_id,
+        q.content AS question_content,
+        q.image_url AS question_image,
+        pa.answer_id,
+        a.content AS answer_content,
+        pa.answer_text,
+        pa.is_correct,
+        pa.response_time,
+        pa.points
+      FROM player_answers pa
+      LEFT JOIN questions q ON pa.question_id = q.id
+      LEFT JOIN answers a ON pa.answer_id = a.id
+      WHERE pa.player_id = ?
+      ORDER BY q.id
+    `, [player_id]);
+    return rows;
+  },
+  async questionCorrectReports(room_id) {
+    const [rows] = await pool.query(`
+      SELECT
+        q.id AS question_id,
+        q.content AS question_content,
+        q.image_url AS question_image,
+        COUNT(CASE WHEN pa.is_correct = 1 THEN 1 END) AS correct_count,
+        COUNT(*) AS total_count,
+        IF(COUNT(*) = 0, 0, ROUND(COUNT(CASE WHEN pa.is_correct = 1 THEN 1 END) / COUNT(*) * 100, 2)) AS correct_percent
+      FROM questions q
+      LEFT JOIN player_answers pa ON pa.question_id = q.id
+      LEFT JOIN players p ON pa.player_id = p.id
+      WHERE q.question_set_id = (
+        SELECT question_set_id FROM rooms WHERE id = ?
+      )
+      AND p.room_id = ?
+      GROUP BY q.id, q.content, q.image_url
+      ORDER BY q.id
+    `, [room_id, room_id]);
     return rows;
   }
 };

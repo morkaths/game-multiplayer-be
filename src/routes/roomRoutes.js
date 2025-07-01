@@ -9,8 +9,10 @@ router.get('/by-set', roomController.getRoomsByQuestionSetId); // Lấy phòng t
 router.get('/by-host', roomController.getRoomsByHostId); // Lấy phòng theo host_id: /rooms/by-host?host_id=
 router.get('/by-pin', roomController.getRoomByPin); // Lấy phòng theo pin: /rooms/by-pin?pin=
 router.get('/reports', authenticateToken, roomController.getRoomReports); // Lấy danh sách báo cáo phòng: /rooms/reports?type=
-router.get('/report/:id', authenticateToken, roomController.getRoomReport); // Lấy chi tiết báo cáo phòng
+router.get('/reports/:id', authenticateToken, roomController.getRoomReport); // Lấy chi tiết báo cáo phòng
 router.get('/player-reports/:id', authenticateToken, roomController.getPlayerReports); // Lấy danh sách báo cáo người chơi của phòng
+router.get('/player-answer-reports/:player_id', authenticateToken, roomController.getPlayerAnswerReports); // lấy danh sách đáp án của người chơi
+router.get('/question-reports/:id', authenticateToken, roomController.getRoomQuestionReports); // Lấy danh sách báo cáo câu hỏi của phòng
 router.get('/:id', roomController.getRoom); // Lấy chi tiết phòng
 
 router.post('/', authenticateToken, roomController.createRoom); // Tạo phòng (cần đăng nhập)

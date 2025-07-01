@@ -76,14 +76,12 @@ const User = {
   // Tìm user theo username
   getByUsername: async (username) => {
     try {
-      const query = 'SELECT * FROM users WHERE username LIKE ?';
-      const [rows] = await pool.query(query, [`%${username}%`]);
-
+      const query = 'SELECT * FROM users WHERE username = ?';
+      const [rows] = await pool.query(query, [username]);
       if (rows.length === 0) {
         return null;
       }
-
-      return rows;
+      return rows[0];
     } catch (err) {
       throw err;
     }

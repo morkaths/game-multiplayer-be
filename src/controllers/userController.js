@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import User from '../models/user.js';
+import { deleteImageOnCloudinary, getPublicIdFromUrl } from '../utils/cloudinaryUtils.js';
 
 // Lấy tất cả user
 export const getUsers = async (req, res) => {
@@ -51,47 +52,6 @@ export const getUserByEmail = async (req, res) => {
   }
 };
 
-
-// Đổi mật khẩu
-export const changePassword = async (req, res) => {
-  try {
-    const { oldPassword, newPassword } = req.body;
-    const userId = req.user.id;
-
-    // Lấy user từ DB
-    const user = await User.getById(userId);
-    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy user' });
-
-    // Kiểm tra oldPassword
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).json({ success: false, message: 'Mật khẩu cũ không đúng' });
-
-    // Hash mật khẩu mới
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await User.updatePassword(userId, hashed);
-
-    res.json({ success: true, message: 'Đổi mật khẩu thành công' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
-  }
-};
-
-// Đặt lại mật khẩu
-export const resetPassword = async (req, res) => {
-  try {
-    const { email, newPassword } = req.body;
-    const user = await User.getByEmail(email);
-    if (!user) return res.status(404).json({ success: false, message: 'Email không tồn tại' });
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await User.updatePassword(user.id, hashed);
-
-    res.json({ success: true, message: 'Đặt lại mật khẩu thành công' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
-  }
-};
-
 // Cập nhật user (admin)
 export const updateUser = async (req, res) => {
   try {
@@ -127,29 +87,66 @@ export const updateUser = async (req, res) => {
   }
 };
 
+// Đổi mật khẩu
+export const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Lấy user từ DB
+    const user = await User.getById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy user' });
+
+    // Kiểm tra oldPassword
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).json({ success: false, message: 'Mật khẩu cũ không đúng' });
+
+    // Hash mật khẩu mới
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await User.updatePassword(userId, hashed);
+
+    res.json({ success: true, message: 'Đổi mật khẩu thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
+  }
+};
+
 // Cập nhật profile (user)
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { email, username } = req.body;
-
-    // Kiểm tra email trùng
-    if (email) {
-      const existing = await User.getByEmail(email);
-      if (existing && existing.id !== userId) {
-        return res.status(400).json({ success: false, message: "Email đã tồn tại" });
-      }
+    const { email, username, avatar_url } = req.body;
+    const currentUser = await User.getById(userId);
+    if (!currentUser) {
+      return res.status(404).json({ success: false, message: "User không tồn tại" });
     }
 
     // Kiểm tra username trùng
-    if (username) {
+    if (username && username !== currentUser.username) {
       const existing = await User.getByUsername(username);
       if (existing && existing.id !== userId) {
         return res.status(400).json({ success: false, message: "Username đã tồn tại" });
       }
     }
 
-    await User.updateUser(userId, { email, username });
+    if (avatar_url && currentUser.avatar_url) {
+      const oldPublicId = getPublicIdFromUrl(currentUser.avatar_url);
+      if (oldPublicId) {
+        try {
+          await deleteImageOnCloudinary(oldPublicId);
+        } catch (err) {
+          console.error('Lỗi xóa avatar cũ trên Cloudinary:', err);
+        }
+      }
+    }
+
+    // Tạo object chỉ chứa các trường cần update
+    const updateData = {};
+    if (email) updateData.email = email;
+    if (username) updateData.username = username;
+    if (avatar_url) updateData.avatar_url = avatar_url;
+
+    await User.updateUser(userId, updateData);
     res.json({ success: true, message: "Cập nhật profile thành công" });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Lỗi server', error: err.message });
@@ -203,6 +200,23 @@ export const deleteUser = async (req, res) => {
     if (req.user.role !== 'admin' && req.user.id != id) {
       return res.status(403).json({ success: false, message: 'Không có quyền thực hiện thao tác này' });
     }
+    const user = await User.getById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User không tồn tại" });
+    }
+
+    // Nếu có avatar_url thì xóa ảnh trên Cloudinary
+    if (user.avatar_url) {
+      const publicId = getPublicIdFromUrl(user.avatar_url);
+      if (publicId) {
+        try {
+          await deleteImageOnCloudinary(publicId);
+        } catch (err) {
+          console.error('Lỗi xóa avatar trên Cloudinary:', err);
+        }
+      }
+    }
+
     await User.deleteUser(id);
     res.json({ success: true, message: 'Xóa user thành công' });
   } catch (err) {
